@@ -90,18 +90,27 @@ public class RedLeftAuto extends OpMode {
     private final double ARM_TICKS_PER_REV = 384.5;
     private Servo armServo;
     private enum State {
-        CLOSE_CLAW_START,
-        LIFT_ARM_SMALL,
-        TO_POLE_FIRST,
-        DROP_CONE_FIRST,
-        DROP_ARM,
-        TO_STACK,
-        CLOSE_CLAW_STACK,
-        LIFT_ARM_STACK,
-        TO_POLE_SECOND,
-        DROP_CONE_SECOND,
-        PARK,
-        END
+        CLOSE_CLAW_START(1000),
+        LIFT_ARM_SMALL(1000),
+        TO_POLE_FIRST(0),
+        WAIT1(1000),
+        DROP_ARM(300),
+        DROP_CONE_FIRST(100),
+        TO_STACK(0),
+        CLOSE_CLAW_STACK(1000),
+        LIFT_ARM_STACK(1000),
+        TO_POLE_SECOND(1000),
+        DROP_ARM_SECOND(300),
+        DROP_CONE_SECOND(100),
+        PARK(0),
+        END(0);
+        final long after;
+        State(long after) {
+            this.after = after;
+        }
+        public long afterWaitUntil() {
+            return System.currentTimeMillis() + after;
+        }
     }
     State currState;
     long waitEnd;
@@ -112,34 +121,35 @@ public class RedLeftAuto extends OpMode {
 
     private void doNextState() {
         if (System.currentTimeMillis() < waitEnd || drive.isBusy()) {
-           return;
+            return;
         }
+        waitEnd = currState.afterWaitUntil();
         switch (currState) {
             case CLOSE_CLAW_START:
                 armServo.setPosition(0.259);
-                waitEnd = System.currentTimeMillis() + 500;
                 currState = State.LIFT_ARM_SMALL;
                 break;
             case LIFT_ARM_SMALL:
                 arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 2));
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                waitEnd = System.currentTimeMillis() + 2000;
                 currState = State.TO_POLE_FIRST;
                 break;
             case TO_POLE_FIRST:
                 drive.followTrajectorySequenceAsync(toPoleFirst);
-                waitEnd = System.currentTimeMillis() + 1000;
-                currState = State.DROP_CONE_FIRST;
+                currState = State.WAIT1;
                 break;
-            case DROP_CONE_FIRST:
-                armServo.setPosition(0);
-                waitEnd = System.currentTimeMillis() + 500;
+            case WAIT1:
                 currState = State.DROP_ARM;
                 break;
             case DROP_ARM:
                 arm.setPower(0.6);
                 arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 1.15));
+                currState = State.DROP_CONE_FIRST;
+                break;
+            case DROP_CONE_FIRST:
+                armServo.setPosition(0);
                 currState = State.TO_STACK;
+                break;
             case TO_STACK:
                 drive.followTrajectorySequenceAsync(toStack);
                 currState = State.CLOSE_CLAW_STACK;
@@ -147,21 +157,21 @@ public class RedLeftAuto extends OpMode {
             case CLOSE_CLAW_STACK:
                 armServo.setPosition(0.259);
                 currState = State.LIFT_ARM_STACK;
-                waitEnd = System.currentTimeMillis() + 500;
                 break;
             case LIFT_ARM_STACK:
                 // arm.setPower(1);
-                arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 3.5));
-                waitEnd = System.currentTimeMillis() + 1000;
+                arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 3.35));
                 currState = State.TO_POLE_SECOND;
                 break;
             case TO_POLE_SECOND:
                 drive.followTrajectorySequenceAsync(toPoleSecond);
-                currState = State.DROP_CONE_SECOND;
+                currState = State.DROP_ARM_SECOND;
                 break;
+            case DROP_ARM_SECOND:
+                arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 1.15));
+                currState = State.DROP_CONE_SECOND;
             case DROP_CONE_SECOND:
                 armServo.setPosition(0);
-                waitEnd = System.currentTimeMillis() + 500;
                 currState = State.PARK;
                 break;
             case PARK:
@@ -197,20 +207,20 @@ public class RedLeftAuto extends OpMode {
                 .splineToConstantHeading(
                         new Vector2d(-22, -61),
                         Math.toRadians(10),
-                        SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
-                .addDisplacementMarker(() -> arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 7.7)))
+                .addDisplacementMarker(() -> arm.setTargetPosition((int) (ARM_TICKS_PER_REV * 7.55)))
                 .splineToConstantHeading(
                         new Vector2d(-11.66, -16),
                         Math.toRadians(95),
-                        SampleMecanumDrive.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .splineToSplineHeading(
-                        new Pose2d(-17.3, -5.2, Math.toRadians(135)),
+                        new Pose2d(-17.5, -3.95, Math.toRadians(135)),
                         Math.toRadians(135),
-                        SampleMecanumDrive.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .build();
@@ -220,8 +230,8 @@ public class RedLeftAuto extends OpMode {
                 .splineToLinearHeading(new Pose2d(-9.5, -13, Math.toRadians(180)), Math.toRadians(-10))
                 .setReversed(false)
                 .splineToConstantHeading(
-                        new Vector2d(-60, -11.66),
-                        Math.toRadians(175),
+                        new Vector2d(-59.3, -9.8),
+                        Math.toRadians(180),
                         SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -237,7 +247,7 @@ public class RedLeftAuto extends OpMode {
                 )
                 .setReversed(false)
                 .splineToLinearHeading(
-                        new Pose2d(-45, -16, Math.toRadians(-90)),
+                        new Pose2d(-45.8, -14.3, Math.toRadians(-90)),
                         Math.toRadians(-100),
                         SampleMecanumDrive.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
@@ -246,7 +256,7 @@ public class RedLeftAuto extends OpMode {
         leftPark = drive
                 .trajectorySequenceBuilder(toPoleSecond.end())
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(-58, -11.66, Math.toRadians(0)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-57, -11.66, Math.toRadians(0)), Math.toRadians(180))
                 .build();
         midPark = drive
                 .trajectorySequenceBuilder(toPoleSecond.end())

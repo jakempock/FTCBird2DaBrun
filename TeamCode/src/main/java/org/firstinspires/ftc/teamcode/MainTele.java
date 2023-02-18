@@ -156,12 +156,12 @@ public class MainTele extends OpMode {
             armPower = -gamepad2.left_stick_y;
         }
         arm.setPower(armPower);
-        if (gamepad1.x || gamepad2.x) {
+        if (gamepad1.x || gamepad2.x || gamepad1.left_bumper) {
             armServo.setPosition(0);
         } else if (gamepad1.b || gamepad2.b) {
-            armServo.setPosition(0.17);
-        } else if (gamepad1.y || gamepad2.y) {
-            armServo.setPosition(0.257);
+            armServo.setPosition(0.175);
+        } else if (gamepad1.y || gamepad2.y || gamepad1.right_bumper) {
+            armServo.setPosition(0.256);
         }
         telemetry.addData("Servo angle", armServo.getPosition());
     }
