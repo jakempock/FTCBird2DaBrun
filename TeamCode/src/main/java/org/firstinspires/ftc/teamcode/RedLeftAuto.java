@@ -34,6 +34,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -126,7 +127,7 @@ public class RedLeftAuto extends OpMode {
         waitEnd = currState.afterWaitUntil();
         switch (currState) {
             case CLOSE_CLAW_START:
-                armServo.setPosition(0.259);
+                armServo.setPosition(0.27);
                 currState = State.LIFT_ARM_SMALL;
                 break;
             case LIFT_ARM_SMALL:
@@ -194,6 +195,7 @@ public class RedLeftAuto extends OpMode {
         arm = hardwareMap.get(DcMotor.class, "armMotor");
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        arm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setPower(1);
         armServo = hardwareMap.get(Servo.class, "armServo");
 
@@ -218,7 +220,7 @@ public class RedLeftAuto extends OpMode {
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .splineToSplineHeading(
-                        new Pose2d(-17.5, -3.95, Math.toRadians(135)),
+                        new Pose2d(-14.7, -6.75, Math.toRadians(135)),
                         Math.toRadians(135),
                         SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
@@ -230,7 +232,7 @@ public class RedLeftAuto extends OpMode {
                 .splineToLinearHeading(new Pose2d(-9.5, -13, Math.toRadians(180)), Math.toRadians(-10))
                 .setReversed(false)
                 .splineToConstantHeading(
-                        new Vector2d(-59.3, -9.8),
+                        new Vector2d(-56.5, -11.66),
                         Math.toRadians(180),
                         SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
@@ -247,7 +249,7 @@ public class RedLeftAuto extends OpMode {
                 )
                 .setReversed(false)
                 .splineToLinearHeading(
-                        new Pose2d(-45.8, -14.3, Math.toRadians(-90)),
+                        new Pose2d(-45, -11.66, Math.toRadians(-90)),
                         Math.toRadians(-100),
                         SampleMecanumDrive.getVelocityConstraint(30, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
@@ -256,7 +258,7 @@ public class RedLeftAuto extends OpMode {
         leftPark = drive
                 .trajectorySequenceBuilder(toPoleSecond.end())
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(-57, -11.66, Math.toRadians(0)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-54, -11.66, Math.toRadians(0)), Math.toRadians(180))
                 .build();
         midPark = drive
                 .trajectorySequenceBuilder(toPoleSecond.end())
